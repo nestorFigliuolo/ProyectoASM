@@ -4,10 +4,13 @@ section .data
   ayuda db "Ayuda"
   ayudal equ $ - ayuda
   salto db 0xa			;Salto de line
+  lineal db 75			;largo de una linea
+  contador db 3			;contador de lineas
 
 section .bss
 
-  buffer: resb 10			;Buffer para leer de archivo
+  buffer: resb 1048576		;Buffer para leer de archivo
+  linea: resb 75		;Buffer para crear una linea a imprimir
 
 section .text
 
@@ -65,14 +68,31 @@ push EAX			;Guardo el descriptor del archivo para cerrarlo despues
 mov EBX,EAX			;Pongo el descriptor del archivo en EBX
 mov EAX,3			;LLamada al sistema para leer
 mov ECX,buffer			;Buffer donde va a quedar el archivo
-mov EDX,10			;Tamaño maximo del buffer
+mov EDX,1048576			;Tamaño maximo del buffer
 int 80h
+
+mov EAX,4
+mov EBX,1
+mov ECX,buffer
+mov EDX,16
+int 80h
+
+call imprimir_salto
 
 
 mov EAX,4
 mov EBX,1
 mov ECX,buffer
-mov EDX,10
+add ECX,16
+mov EDX, 16
+int 80h
+
+call imprimir_salto
+
+mov EAX,4
+mov EBX,1
+mov ECX, buffer
+mov EDX,16
 int 80h
 
 call imprimir_salto
