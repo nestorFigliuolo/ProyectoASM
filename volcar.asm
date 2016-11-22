@@ -5,19 +5,20 @@
 %include "caracter_contador.asm"
 
 
-%define hex_offset 7
-%define char_offset 57
+%define hex_offset 8
+%define char_offset 58
 %define linea_max 16
 
 section .data
 
   ayuda db "Ayuda"
   ayudal equ $ - ayuda
-  linea db "00000  hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh  |................|"
+  linea db "000000  hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh  |................|"
   lineal equ $ - linea
-  buffer0s db "00000"
+  buffer0s db "000000"			;Buffer para escribir la ultima vez la cantidad de elementos leidos
   buffer0sl equ $ - buffer0s
 
+  char_max dd 0				;cantidad de caracteres leidos del archivo
   contador dd 0 			;contador de lineas
   hex_pos dd hex_offset			;offset a la posicion de la linea para insertar la representacion hexadecim
   char_pos dd char_offset		;offset a la posicion de la linea donde insertar el char
@@ -26,7 +27,7 @@ section .data
   salto db 10
   espacio db 0x20
   barra db 7ch
-resto dd 0
+  resto dd 0
 
 
 section .bss
@@ -107,6 +108,8 @@ mov EAX,3			;LLamada al sistema para leer
 mov ECX,buffer			;Buffer donde va a quedar el archivo
 mov EDX,1048576			;Tamaño maximo del buffer
 int 80h
+				;Sumo uno a la cantidad de caracteres para leer el ultimo
+mov [char_max],EAX		;Guardo la cantidad de caracteres leidos
 
 leer_linea:
 
@@ -114,8 +117,6 @@ leer_linea:
 mov EBX,buffer			;Muevo la direccion inicial del buffer
 add EBX,[contador]		;Le sumo el contador donde tengo que char leer
 mov CL,[EBX]			;Copio el caracter almacenado en la posicion buffer+contador
-cmp CL, 0			;Si el caracter=0 termine de leer el archivo
-je fin_archivo			;Salto a fin_archivo
 
 push ECX			;Guardo el caracter
 
@@ -133,9 +134,13 @@ call caracter_hexa		;Convierto el caracter en hexadecimal
 mov [EAX],CX			;Lo escribo en la linea
 
 
-inc DWORD [contador]		;Incremento el contador de caracteres
 inc DWORD [char_pos]		;Incremento la posicion donde escribir caracteres en la linea
 add [hex_pos],DWORD 3		;Incremento la posicion donde escribir el hexa en la linea
+
+inc DWORD [contador]
+mov EAX,[contador]
+cmp [char_max],EAX
+je fin_archivo
 
 ;Veo si el contador es multiplo de 16, para cambiar de linea
 mov EAX,[contador]		;Muevo el contador al registro EAX como dividendo
@@ -193,9 +198,6 @@ inc BYTE [char_pos]
 reemplazar:
 ;Reemplazo todos los caracteres restantes con espacios
 
-  cmp [resto], WORD 0
-  je imprimir_faltante
-
   ;Reemplazo el caracter en la linea por un espacio
   mov EAX,linea
   add EAX,[char_pos]
@@ -212,6 +214,9 @@ reemplazar:
   add BYTE [hex_pos],3
 
   dec BYTE [resto]
+  cmp [resto], WORD 0
+  je imprimir_faltante
+
 
   jmp reemplazar
 

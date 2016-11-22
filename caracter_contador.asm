@@ -10,7 +10,7 @@ section .text
 
 caracter_contador:
 
-  add EBX, 4		;Sumo 4 a buffer, empiezo desde la posicion menos significativa
+  add EBX, 5		;Sumo 4 a buffer, empiezo desde la posicion menos significativa
  
 bucle_contador:
   
