@@ -1,7 +1,9 @@
 
 %include "itoa.asm"
+%include "caracter_hexa.asm"
+%include "caracter_imprimible.asm"
 
-%define hex_offset 8
+%define hex_offset 7
 %define char_offset 57
 %define linea_max 16
 
@@ -13,7 +15,7 @@ section .data
   lineal equ $ - linea
   salto db 0xa				;Salto de line
   contador dd 0 			;contador de lineas
-  hex_pos dd hex_pos			;offset a la posicion de la linea para insertar la representacion hexadecimal
+  hex_pos dd hex_offset			;offset a la posicion de la linea para insertar la representacion hexadecimal
   char_pos dd char_offset		;offset a la posicion de la linea donde insertar el char
 
 section .bss
@@ -97,18 +99,32 @@ int 80h
 
 leer_linea:
 
-;Escribo en la posicion correspondiente de la linea el caracter que leo del buffer
-mov EAX,linea			;Muevo la direccion inicial de la linea
-add EAX,[char_pos]		;Le summo el offset
+;Cargo el caracter del archivo
 mov EBX,buffer			;Muevo la direccion inicial del buffer
 add EBX,[contador]		;Le sumo el contador donde tengo que char leer
 mov CL,[EBX]			;Copio el caracter almacenado en la posicion buffer+contador
 cmp CL, 0			;Si el caracter=0 termine de leer el archivo
 je fin_archivo			;Salto a fin_archivo
+
+push ECX			;Guardo el caracter
+
+;Escribo en la posicion correspondiente de la linea el caracter que leo del buffer
+mov EAX,linea			;Muevo la direccion inicial de la linea
+add EAX,[char_pos]		;Le summo el offset
+call caracter_imprimible	;Convierte el caracter leido en un caracter imprimible
 mov [EAX],CL			;Copio el caracter que lei en linea+char_pos
+
+pop ECX				;Saco el caracter que lei de la pila
+
+mov EAX,linea			;Muevo la direccion inicial de la linea
+add EAX,[hex_pos]		;Le sumo el offset
+call caracter_hexa		;Convierto el caracter en hexadecimal
+mov [EAX],CX			;Lo escribo en la linea
+
 
 inc DWORD [contador]		;Incremento el contador de caracteres
 inc DWORD [char_pos]		;Incremento la posicion donde escribir caracteres en la linea
+add [hex_pos],DWORD 3		;Incremento la posicion donde escribir el hexa en la linea
 
 ;Veo si el contador es multiplo de 16, para cambiar de linea
 mov EAX,[contador]		;Muevo el contador al registro EAX como dividendo

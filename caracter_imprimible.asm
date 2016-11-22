@@ -1,3 +1,5 @@
+%include "convertir.asm"
+
 section .text
  
 ; Funcion convertir: ;convierte CL a un caracter imprimible
