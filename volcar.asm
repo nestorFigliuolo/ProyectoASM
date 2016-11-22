@@ -15,8 +15,8 @@ section .data
   ayudal equ $ - ayuda
   linea db "00000  hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh  |................|"
   lineal equ $ - linea
-  buffer_ceros db "00000"
-  bufferl equ $ - buffer_ceros
+  buffer0s db "00000"
+  buffer0sl equ $ - buffer0s
 
   contador dd 0 			;contador de lineas
   hex_pos dd hex_offset			;offset a la posicion de la linea para insertar la representacion hexadecim
@@ -229,13 +229,13 @@ call imprimir_salto
 imprimir_contador:
 
 mov EAX,[contador]
-mov EBX,buffer_ceros
+mov EBX,buffer0s
 call caracter_contador
 
 mov EAX,4
 mov EBX,1
-mov ECX,buffer_ceros
-mov EDX,bufferl
+mov ECX,buffer0s
+mov EDX,buffer0sl
 int 80h
 
 call imprimir_salto
