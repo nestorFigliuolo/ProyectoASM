@@ -1,4 +1,4 @@
-%include "convertir.asm"
+
 
 section .text
  

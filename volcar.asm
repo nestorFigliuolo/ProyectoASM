@@ -1,7 +1,9 @@
-
+%include "convertir.asm"
 %include "itoa.asm"
 %include "caracter_hexa.asm"
 %include "caracter_imprimible.asm"
+%include "caracter_contador.asm"
+
 
 %define hex_offset 7
 %define char_offset 57
@@ -13,10 +15,19 @@ section .data
   ayudal equ $ - ayuda
   linea db "00000  hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh  |................|"
   lineal equ $ - linea
-  salto db 0xa				;Salto de line
+  buffer_ceros db "00000"
+  bufferl equ $ - buffer_ceros
+
   contador dd 0 			;contador de lineas
-  hex_pos dd hex_offset			;offset a la posicion de la linea para insertar la representacion hexadecimal
+  hex_pos dd hex_offset			;offset a la posicion de la linea para insertar la representacion hexadecim
   char_pos dd char_offset		;offset a la posicion de la linea donde insertar el char
+
+
+  salto db 10
+  espacio db 0x20
+  barra db 7ch
+resto dd 0
+
 
 section .bss
 
@@ -69,7 +80,7 @@ mov EBX,EAX			;Hago una copia del puntero
 
 
 ;Compruebo que el segundo parametro sea "-h"
-cmp BYTE [EAX], 2Dh		;Comparo el primer caracter con "-" 
+cmp BYTE [EAX], 2Dh		;Comparo el primer caracter con "-"
 jne abrir_archivo		;Si no es "-" procedo a abrir el archivo
 inc EAX				;incremento el puntero
 cmp BYTE [EAX], 68h		;Comparo el segundo caracter con "h"
@@ -149,14 +160,62 @@ int 80h
 mov [char_pos],DWORD char_offset		;char_pos=57
 mov [hex_pos],DWORD hex_offset			;hex_pos=8
 
+
+
+mov EAX,[contador]
+mov EBX,linea
+call caracter_contador
+
 call imprimir_salto
 
 jmp leer_linea					;Vuelvo a imprimir una linea
 
 fin_archivo:
 
+;Si no hay nada mas para imprimir salgo a imprimir el contador
+mov EAX,[contador]		;Muevo el contador
+mov EDX,0			;Reseteo EDX en 0
+mov EBX,linea_max		;Muevo a EBX 16
+idiv EBX			;Divido contador/16
+cmp EDX,0			;Comparo el resto con 0
+je imprimir_contador		;Si es 0 no hay nada mas para copiar
 
+sub EBX,EDX		;16-resto
+mov [resto], EBX	;Guardo el resto para saber cuantos caracteres tengo que reemplazar
 
+;Agrego una sola vez una barra vertical al final de los caracteres
+mov EAX,linea
+add EAX,[char_pos]
+mov BL,BYTE [barra]
+mov [EAX], BL
+inc BYTE [char_pos]
+
+reemplazar:
+;Reemplazo todos los caracteres restantes con espacios
+
+  cmp [resto], WORD 0
+  je imprimir_faltante
+
+  ;Reemplazo el caracter en la linea por un espacio
+  mov EAX,linea
+  add EAX,[char_pos]
+  mov BL,[espacio]
+  mov [EAX],BL
+  inc BYTE [char_pos]
+
+  ;Reemplazo los dos hexadecimales por dos espacios
+  mov EAX,linea
+  add EAX,[hex_pos]
+  mov BL,[espacio]
+  mov BH,[espacio]
+  mov [EAX],BX
+  add BYTE [hex_pos],3
+
+  dec BYTE [resto]
+
+  jmp reemplazar
+
+imprimir_faltante:
 ;Imprimo la linea que falta
 mov EAX,4
 mov EBX,1
@@ -166,8 +225,18 @@ int 80h
 
 call imprimir_salto
 
+
+imprimir_contador:
+
 mov EAX,[contador]
-call imprimir_itoa
+mov EBX,buffer_ceros
+call caracter_contador
+
+mov EAX,4
+mov EBX,1
+mov ECX,buffer_ceros
+mov EDX,bufferl
+int 80h
 
 call imprimir_salto
 
