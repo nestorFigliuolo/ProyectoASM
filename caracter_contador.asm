@@ -20,7 +20,7 @@ bucle_contador:
     
   call convertir	;Convierto 0<resto<16 en ascii hexa
   mov [EBX], DL		;Muevo ascii hexa a buffer
-  dec EBX		:Decremento buffer. Muevo una posicion a la izquierda
+  dec EBX		;Decremento buffer. Muevo una posicion a la izquierda
   
   cmp EAX,0		;Comparo Cociente con 0.
   jne bucle_contador	;Si (Cociente!=0): sigo dividiendo
