@@ -1,16 +1,25 @@
 
+%include "itoa.asm"
+
+%define hex_offset 8
+%define char_offset 57
+%define linea_max 16
+
 section .data
 
   ayuda db "Ayuda"
   ayudal equ $ - ayuda
-  salto db 0xa			;Salto de line
-  lineal db 75			;largo de una linea
-  contador db 3			;contador de lineas
+  linea db "00000  hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh  |cccccccccccccccc|"
+  lineal equ $ - linea
+  salto db 0xa				;Salto de line
+  contador dd 0 			;contador de lineas
+  hex_pos dd hex_pos			;offset a la posicion de la linea para insertar la representacion hexadecimal
+  char_pos dd char_offset		;offset a la posicion de la linea donde insertar el char
 
 section .bss
 
   buffer: resb 1048576		;Buffer para leer de archivo
-  linea: resb 75		;Buffer para crear una linea a imprimir
+  buf: resb 32
 
 section .text
 
@@ -24,6 +33,21 @@ mov EBX,1
 mov ECX,salto
 mov EDX,1
 int 80h
+ret
+
+imprimir_itoa:
+
+mov EBX,buf
+call itoa
+
+mov EAX,4
+mov EBX,1
+mov ECX,buf
+mov EDX,32
+int 80h
+
+call imprimir_salto
+
 ret
 
 _start:
@@ -71,36 +95,61 @@ mov ECX,buffer			;Buffer donde va a quedar el archivo
 mov EDX,1048576			;Tamaño maximo del buffer
 int 80h
 
+leer_linea:
+
+
+mov EAX,linea
+add EAX,[char_pos]
+mov EBX,buffer
+add EBX,[contador]
+mov ECX,0
+mov CX,[EBX]
+push EAX
+mov EAX,0
+mov AL,CL
+call imprimir_itoa
+cmp CL, 0
+je fin_archivo
+pop EAX
+mov [EAX],CL
+
+inc DWORD [contador]
+
+inc DWORD [char_pos]
+
+mov EAX,[contador]
+mov EBX,linea_max
+mov EDX,0
+idiv EBX
+cmp EDX,0
+je reset
+
+jmp leer_linea
+
+reset:
 mov EAX,4
 mov EBX,1
-mov ECX,buffer
-mov EDX,16
+mov ECX,linea
+mov EDX,lineal
 int 80h
 
+mov [char_pos],DWORD char_offset
+mov [hex_pos],DWORD hex_offset
+
+mov EAX,[char_pos]
+call imprimir_itoa
 call imprimir_salto
 
+;jmp leer_linea
 
-mov EAX,4
-mov EBX,1
-mov ECX,buffer
-add ECX,16
-mov EDX, 16
-int 80h
-
-call imprimir_salto
-
-mov EAX,4
-mov EBX,1
-mov ECX, buffer
-mov EDX,16
-int 80h
-
-call imprimir_salto
-
+fin_archivo:
 ;salgo correctamente
 mov EAX,1
 mov EBX,0
 int 80h
+
+
+
 
 
 imprimir_ayuda:
