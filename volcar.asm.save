@@ -102,46 +102,43 @@ mov EAX,linea			;Muevo la direccion inicial de la linea
 add EAX,[char_pos]		;Le summo el offset
 mov EBX,buffer			;Muevo la direccion inicial del buffer
 add EBX,[contador]		;Le sumo el contador donde tengo que char leer
-mov CL,[EBX]			;Copio el caracter almacenado en la posicion buffer+contador
-cmp CL, 0			;Si el caracter=0 termine de leer el archivo
-je fin_archivo			;Salto a fin_archivo
-mov [EAX],CL			;Copio el caracter que lei en linea+char_pos
+mov CL,[EBX]			;Muevo el caracter del bufer al registro CL
+cmp CL, 0			;Si es el caracter nulo lei el ultimo caracter del archivo
+je fin_archivo			;Salto a el ultimo proceso de la linea
+mov [EAX],CL			;Muevo a la direccion efectiva de la linea el caracter que quiero escribir
 
-inc DWORD [contador]		;Incremento el contador de caracteres
-inc DWORD [char_pos]		;Incremento la posicion donde escribir caracteres en la linea
+inc DWORD [contador]		;Incremento el contado
 
-;Veo si el contador es multiplo de 16, para cambiar de linea
-mov EAX,[contador]		;Muevo el contador al registro EAX como dividendo
-mov EBX,linea_max		;Muevo un 16 como divisor
-mov EDX,0			;Reseteo EDX con 0
-idiv EBX			;Uso division entera
-cmp EDX,0			;Si el resto es 0 salto a resetear la linea para leer una nueva
+inc DWORD [char_pos]
+
+mov EAX,[contador]
+mov EBX,linea_max
+mov EDX,0
+idiv EBX
+cmp EDX,0
 je reset
 
-jmp leer_linea			;Vuelvo a leer un caracter
+jmp leer_linea
 
 reset:
-
-;Imprimo la linea por pantalla
 mov EAX,4
 mov EBX,1
 mov ECX,linea
 mov EDX,lineal
 int 80h
 
-;Reseteo las posiciones donde voy a escribir los caracteres
-mov [char_pos],DWORD char_offset		;char_pos=57
-mov [hex_pos],DWORD hex_offset			;hex_pos=8
+mov [char_pos],DWORD char_offset
+mov [hex_pos],DWORD hex_offset
 
 call imprimir_salto
 
-jmp leer_linea					;Vuelvo a imprimir una linea
+jmp leer_linea
 
 fin_archivo:
 
 
 
-;Imprimo la linea que falta
+
 mov EAX,4
 mov EBX,1
 mov ECX,linea
