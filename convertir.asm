@@ -1,33 +1,25 @@
 section .text
  
-; Funcion convertir: convierte el caracter en DL a hexa en ascii
+; Funcion convertir: Convierte el caracter en DL a hexa en ascii (0..9A..F)
 ; PARAMETROS:
 ; DL - Caracter
 ; RETORNO:
-; DL - Caracter en hexa ascii
+; DL - Caracter en hexa ascii (0..9A..F)
  
 convertir:
- 
-  ;Resguardar la pila
-  push EBP		;guardo el puntero a la base original
-  mov EBP,ESP		;nuevo EBP apunta al tope
 
-  cmp DL,9		;comparo con 9
-  jg esletra		;si >9 es letra
+  cmp DL,9		;Comparo Caracter con 9
+  jg esletra		;Si Caracter>9: Ir a esletra
 
-esnumero:
+esnumero:		;(Caracter<=9)
 
-  add DL,48		;si <=9 es numero, sumo 48
-  jmp fin_convertir
+  add DL,48		;Caracter es numero. Sumo 48 para convertir a ascii numero (0..9)
+  jmp fin_convertir	;Ir a fin
   
-esletra:
+esletra:		;(Caracter>9)
 
-  add DL,55		;es letra: sumo 55
+  add DL,55		;Caracter es letra. Sumo 55 para convertir a ascii letra (A..F)
    
 fin_convertir:
-
-  ;Limpieza de la pila 	
-  mov ESP, EBP      ;restauro el tope de la pila
-  pop EBP       ;restauro la base de la pila 
   
-  ret
+  ret			;Fin
