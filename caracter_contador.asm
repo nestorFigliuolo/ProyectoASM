@@ -11,11 +11,12 @@ section .text
 caracter_contador:
 
   add EBX, 5		;Sumo 4 a buffer, empiezo desde la posicion menos significativa
+  mov ECX,16		;ECX=16 divisor
+
  
 bucle_contador:
   
   mov EDX,0		;Preparo EDX=0 para usar idiv
-  mov ECX,16		;ECX=16 divisor
   idiv ECX		;Divido por 16, EDX=resto, EAX=cociente
     
   call convertir	;Convierto 0<resto<16 en ascii hexa

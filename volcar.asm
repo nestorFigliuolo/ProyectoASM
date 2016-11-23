@@ -276,7 +276,6 @@ mov EAX,SYS_EXIT
 mov EBX,0
 int 80h
 
-Si hubo algun problema
 salir_error:
 
 ;Salgo con error 1
