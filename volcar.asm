@@ -2,7 +2,7 @@
 %include "caracter_hexa.asm"
 %include "caracter_imprimible.asm"
 %include "caracter_contador.asm"
-
+%include "itoa.asm"
 
 %define hex_offset 8
 %define char_offset 58
@@ -46,7 +46,7 @@ section .data
 section .bss
 
   buffer: resb 1048576		;Buffer para leer de archivo
-
+  buf: resb 32
 section .text
 
 global _start
@@ -109,8 +109,10 @@ mov ECX,buffer			;Buffer donde va a quedar el archivo
 mov EDX,1048576			;Tamaño maximo del buffer
 int 80h
 
-mov [char_max],EAX		;Guardo la cantidad de caracteres leido
+cmp EAX, 0			;Si el tamaño del archivo es 0
+je  salir_sin_error		;Salgo sin error
 
+mov [char_max],EAX		;Guardo la cantidad de caracteres leido
 
 leer_linea:
 
@@ -254,11 +256,12 @@ pop EBX
 mov EAX,SYS_CLOSE
 int 80h
 
-;salgo correctamente
+salir_sin_error:
+
+; Salgo sin error
 mov EAX,SYS_EXIT
 mov EBX,0
 int 80h
-
 
 imprimir_ayuda:
 
@@ -270,11 +273,6 @@ mov EDX,ayudal
 int 80h
 
 call imprimir_salto		;Imprimo un salto de linea
-
-; Salgo sin error
-mov EAX,SYS_EXIT
-mov EBX,0
-int 80h
 
 salir_error:
 
