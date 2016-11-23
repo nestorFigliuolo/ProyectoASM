@@ -24,10 +24,10 @@ section .data
   char_pos dd char_offset		;offset a la posicion de la linea donde insertar el char
 
 
-  salto db 10
-  espacio db 0x20
-  barra db 7ch
-  resto dd 0
+  salto db 10				;"\n"
+  espacio db 0x20			;" "
+  barra db 7ch				;"|"
+  resto dd 0				;Diferencia entre el contador y la cantidad de lineas
 
 
 section .bss
@@ -47,21 +47,6 @@ mov EBX,1
 mov ECX,salto
 mov EDX,1
 int 80h
-ret
-
-imprimir_itoa:
-
-mov EBX,buf
-call itoa
-
-mov EAX,4
-mov EBX,1
-mov ECX,buf
-mov EDX,32
-int 80h
-
-call imprimir_salto
-
 ret
 
 _start:
@@ -94,15 +79,20 @@ jmp imprimir_ayuda		;Si el argv es "-h" imprimo la ayuda
 abrir_archivo:
 
 ;Abro el archivo que tiene el texto a imprimir, la ruta al archivo se encuentra en EBX
-mov EAX,5			;Pongo el numero de llamada al sistema para abrir el archivo
-mov ECX,0			;Voy a abrir el archivo en solo lectura
-int 80h
+ mov EAX,5			;Pongo el numero de llamada al sistema para abrir el archivo
+ mov ECX,0
+ mov EDX,0			;Voy a abrir el archivo en solo lectura
+ int 80h
+push EAX
 
-cmp EAX,-1			;Si hubo error el descriptor del archivo sera -1 y salgo con error 2
+add EAX,2
+cmp EAX, 0 			;Si hubo error el descriptor del archivo sera -1 y salgo con error 2
 je salir_error_archivo
 
 push EAX			;Guardo el descriptor del archivo para cerrarlo despues
 
+call imprimir_salto
+pop EAX
 mov EBX,EAX			;Pongo el descriptor del archivo en EBX
 mov EAX,3			;LLamada al sistema para leer
 mov ECX,buffer			;Buffer donde va a quedar el archivo
@@ -137,10 +127,11 @@ mov [EAX],CX			;Lo escribo en la linea
 inc DWORD [char_pos]		;Incremento la posicion donde escribir caracteres en la linea
 add [hex_pos],DWORD 3		;Incremento la posicion donde escribir el hexa en la linea
 
-inc DWORD [contador]
-mov EAX,[contador]
-cmp [char_max],EAX
-je fin_archivo
+;Incremento el contador, si es igual a la cantidad de caracteres que tiene el archivo dejo de leer
+inc DWORD [contador]		;incremento el contador
+mov EAX,[contador]		;lo muevo a EAX para comparar
+cmp [char_max],EAX		;Si es igual que la cantidad de caracteres leidos
+je fin_archivo			;salto a fin_archivo
 
 ;Veo si el contador es multiplo de 16, para cambiar de linea
 mov EAX,[contador]		;Muevo el contador al registro EAX como dividendo
@@ -167,9 +158,9 @@ mov [hex_pos],DWORD hex_offset			;hex_pos=8
 
 
 
-mov EAX,[contador]
+mov EAX,[contador]				;Cargo el contador para imprimir la cantidad actual en la linea
 mov EBX,linea
-call caracter_contador
+call caracter_contador				;Llamo a la funcion que me escribe el contador en la linea
 
 call imprimir_salto
 
@@ -185,11 +176,12 @@ idiv EBX			;Divido contador/16
 cmp EDX,0			;Comparo el resto con 0
 je imprimir_contador		;Si es 0 no hay nada mas para copiar
 
-sub EBX,EDX		;16-resto
-mov [resto], EBX	;Guardo el resto para saber cuantos caracteres tengo que reemplazar
+;Guardo el resto
+sub EBX,EDX			;16-resto
+mov [resto], EBX		;Guardo el resto para saber cuantos caracteres tengo que reemplazar
 
 ;Agrego una sola vez una barra vertical al final de los caracteres
-mov EAX,linea
+mov EAX,linea			;"|"
 add EAX,[char_pos]
 mov BL,BYTE [barra]
 mov [EAX], BL
@@ -244,6 +236,11 @@ mov EDX,buffer0sl
 int 80h
 
 call imprimir_salto
+
+;Cierro el archivo
+pop EBX
+mov EAX,6
+int 80h
 
 ;salgo correctamente
 mov EAX,1
