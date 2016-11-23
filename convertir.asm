@@ -2,9 +2,9 @@ section .text
  
 ; Funcion convertir: Convierte el caracter en DL a hexa en ascii (0..9A..F)
 ; PARAMETROS:
-; DL - Caracter
+;   DL - Caracter
 ; RETORNO:
-; DL - Caracter en hexa ascii (0..9A..F)
+;   DL - Caracter en hexa ascii (0..9A..F)
  
 convertir:
 

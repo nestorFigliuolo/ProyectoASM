@@ -1,5 +1,4 @@
 %include "convertir.asm"
-%include "itoa.asm"
 %include "caracter_hexa.asm"
 %include "caracter_imprimible.asm"
 %include "caracter_contador.asm"
@@ -9,10 +8,24 @@
 %define char_offset 58
 %define linea_max 16
 
+%define SYS_EXIT 1
+
+%define SYS_READ 3
+
+%define SYS_WRITE 4
+%define STDOUT 1
+
+%define SYS_OPEN 5
+%define RDONLY 0
+
+%define SYS_CLOSE 6
+
 section .data
 
-  ayuda db "Ayuda"
+  ;Ayuda que se imprimira por pantalla
+  ayuda db "El programa hace un volcado del contendido del archivo pasado como parametro y lo expresa en hexadecimal y en ascii junto con su direccion de memoria relativa en porciones de a 16 bytes. El programa saldrá con error (2) si no se encuentra el archivo pasado como parametro."
   ayudal equ $ - ayuda
+  ;Prototipo de la linea que se imprimira por pantalla
   linea db "000000  hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh hh  |................|"
   lineal equ $ - linea
   buffer0s db "000000"			;Buffer para escribir la ultima vez la cantidad de elementos leidos
@@ -33,7 +46,6 @@ section .data
 section .bss
 
   buffer: resb 1048576		;Buffer para leer de archivo
-  buf: resb 32
 
 section .text
 
@@ -42,8 +54,8 @@ global _start
 imprimir_salto:
 
 ; imprimo un salto de linea por pantalla
-mov EAX,4
-mov EBX,1
+mov EAX,SYS_WRITE
+mov EBX,STDOUT
 mov ECX,salto
 mov EDX,1
 int 80h
@@ -79,11 +91,10 @@ jmp imprimir_ayuda		;Si el argv es "-h" imprimo la ayuda
 abrir_archivo:
 
 ;Abro el archivo que tiene el texto a imprimir, la ruta al archivo se encuentra en EBX
- mov EAX,5			;Pongo el numero de llamada al sistema para abrir el archivo
- mov ECX,0
- mov EDX,0			;Voy a abrir el archivo en solo lectura
+ mov EAX,SYS_OPEN		;Pongo el numero de llamada al sistema para abrir el archivo
+ mov ECX,0			;No pongo ningun flag para el archivo a abrir
+ mov EDX,RDONLY			;Voy a abrir el archivo en solo lectura
  int 80h
-push EAX
 
 add EAX,2
 cmp EAX, 0 			;Si hubo error el descriptor del archivo sera -1 y salgo con error 2
@@ -92,9 +103,8 @@ sub EAX,2
 
 push EAX			;Guardo el descriptor del archivo para cerrarlo despues
 
-pop EAX
 mov EBX,EAX			;Pongo el descriptor del archivo en EBX
-mov EAX,3			;LLamada al sistema para leer
+mov EAX,SYS_READ		;LLamada al sistema para leer
 mov ECX,buffer			;Buffer donde va a quedar el archivo
 mov EDX,1048576			;Tamaño maximo del buffer
 int 80h
@@ -144,11 +154,12 @@ je reset
 
 jmp leer_linea			;Vuelvo a leer un caracter
 
+;Reestablezco la linea para seguir leyendo caracteres
 reset:
 
 ;Imprimo la linea por pantalla
-mov EAX,4
-mov EBX,1
+mov EAX,SYS_WRITE
+mov EBX,STDOUT
 mov ECX,linea
 mov EDX,lineal
 int 80h
@@ -158,7 +169,7 @@ mov [char_pos],DWORD char_offset		;char_pos=57
 mov [hex_pos],DWORD hex_offset			;hex_pos=8
 
 
-
+;Escribo en la linea el contador, exceptuando la primera que ya esta en 000000
 mov EAX,[contador]				;Cargo el contador para imprimir la cantidad actual en la linea
 mov EBX,linea
 call caracter_contador				;Llamo a la funcion que me escribe el contador en la linea
@@ -193,10 +204,10 @@ reemplazar:
 
   ;Reemplazo el caracter en la linea por un espacio
   mov EAX,linea
-  add EAX,[char_pos]
+  add EAX,[char_pos]		;Quiero agregarlo en linea+char_pos que es donde deberia seguir escribiendo
   mov BL,[espacio]
   mov [EAX],BL
-  inc BYTE [char_pos]
+  inc BYTE [char_pos]		;Incremento char_pos para no sobreescribir lo que acabo de escribir
 
   ;Reemplazo los dos hexadecimales por dos espacios
   mov EAX,linea
@@ -215,23 +226,23 @@ reemplazar:
 
 imprimir_faltante:
 ;Imprimo la linea que falta
-mov EAX,4
-mov EBX,1
+mov EAX,SYS_WRITE
+mov EBX,STDOUT
 mov ECX,linea
 mov EDX,lineal
 int 80h
 
 call imprimir_salto
 
-
+;Imprimo el contador con el valor final de caracteres leidos
 imprimir_contador:
 
 mov EAX,[contador]
-mov EBX,buffer0s
+mov EBX,buffer0s		;Buffer especial que contiene "000000"
 call caracter_contador
 
-mov EAX,4
-mov EBX,1
+mov EAX,SYS_WRITE
+mov EBX,STDOUT
 mov ECX,buffer0s
 mov EDX,buffer0sl
 int 80h
@@ -240,23 +251,20 @@ call imprimir_salto
 
 ;Cierro el archivo
 pop EBX
-mov EAX,6
+mov EAX,SYS_CLOSE
 int 80h
 
 ;salgo correctamente
-mov EAX,1
+mov EAX,SYS_EXIT
 mov EBX,0
 int 80h
-
-
-
 
 
 imprimir_ayuda:
 
 ;Imprimo el texto de ayuda
-mov EAX,4
-mov EBX,1
+mov EAX,SYS_WRITE
+mov EBX,STDOUT
 mov ECX,ayuda
 mov EDX,ayudal
 int 80h
@@ -264,20 +272,22 @@ int 80h
 call imprimir_salto		;Imprimo un salto de linea
 
 ; Salgo sin error
-mov EAX,1
+mov EAX,SYS_EXIT
 mov EBX,0
 int 80h
 
+Si hubo algun problema
 salir_error:
 
 ;Salgo con error 1
-mov EAX,1
+mov EAX,SYS_EXIT
 mov EBX,1
 int 80h
 
+;Si hubo problema cuando se quiso abrir el archivo
 salir_error_archivo:
 
 ;Salgo con error 2
-mov EAX,1
+mov EAX,SYS_EXIT
 mov EBX,2
 int 80h

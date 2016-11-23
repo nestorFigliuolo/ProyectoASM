@@ -1,14 +1,14 @@
 section .text
- 
+
 ; Funcion caracter_hexa: Convierte el caracter en CL a hexa ascii. Los caracteres hexa
 ; se almacenan en CH y CL EN ORDEN INVERTIDO.
 ; Para que los caracteres se impriman en el orden correcto se debe usar CX.
 ; PARAMETROS:
-; CL - Caracter
+;  CL - Caracter
 ; RETORNO:
-; CL - Primer hexa en ascii. 
-; CH - Segundo hexa en ascii. 
- 
+;  CL - Primer hexa en ascii. 
+;  CH - Segundo hexa en ascii. 
+
 caracter_hexa:
 
   mov DL,CL		;Hago copia de caracter

@@ -2,9 +2,9 @@ section .text
  
 ; Funcion caracter_imprimible: Dado un caracter en CL, si no es imprimible lo convierte a "."
 ; PARAMETROS:
-; CL - Caracter
+;   CL - Caracter
 ; RETORNO:
-; CL - Caracter original si este es imprimible, "." si no era imprimible
+;   CL - Caracter original si este es imprimible, "." si no era imprimible
 
 caracter_imprimible:
 

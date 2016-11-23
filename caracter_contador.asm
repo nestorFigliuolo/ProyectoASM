@@ -3,10 +3,10 @@ section .text
 ; Funcion caracter_contador: convierte un numero (menor a 2^20) en EAX a ascii hexa y lo guarda en 
 ; los primeros 5 lugares del buffer de EBX
 ; PARAMETROS:
-; EAX - Numero
-; EBX - Buffer 
+;   EAX - Numero
+;   EBX - Buffer 
 ; RETORNO:
-; EBX - Con sus primeros 5 lugares representando al numero en hexa ascii
+;   EBX - Con sus primeros 6 lugares representando al numero en hexa ascii
 
 caracter_contador:
 
