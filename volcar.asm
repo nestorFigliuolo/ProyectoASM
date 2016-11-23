@@ -88,18 +88,19 @@ push EAX
 add EAX,2
 cmp EAX, 0 			;Si hubo error el descriptor del archivo sera -1 y salgo con error 2
 je salir_error_archivo
+sub EAX,2
 
 push EAX			;Guardo el descriptor del archivo para cerrarlo despues
 
-call imprimir_salto
 pop EAX
 mov EBX,EAX			;Pongo el descriptor del archivo en EBX
 mov EAX,3			;LLamada al sistema para leer
 mov ECX,buffer			;Buffer donde va a quedar el archivo
 mov EDX,1048576			;Tamaño maximo del buffer
 int 80h
-				;Sumo uno a la cantidad de caracteres para leer el ultimo
-mov [char_max],EAX		;Guardo la cantidad de caracteres leidos
+
+mov [char_max],EAX		;Guardo la cantidad de caracteres leido
+
 
 leer_linea:
 
