@@ -2,7 +2,6 @@
 %include "caracter_hexa.asm"
 %include "caracter_imprimible.asm"
 %include "caracter_contador.asm"
-%include "itoa.asm"
 
 %define hex_offset 8
 %define char_offset 58
@@ -46,7 +45,7 @@ section .data
 section .bss
 
   buffer: resb 1048576		;Buffer para leer de archivo
-  buf: resb 32
+	
 section .text
 
 global _start
